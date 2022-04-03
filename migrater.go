@@ -78,60 +78,55 @@ func (m *migrater) UpMigrations() error {
 }
 
 func (m *migrater) UpConcreteMigration(name string) error {
-	mig, ok := pool.migrations[name]
+	migration, ok := pool.migrations[name]
 	if !ok {
 		return errors.New("Does not exist migration with name: " + name)
 	}
 
+	var err error
 	tx := m.db.Begin()
-	if err := mig.Up(tx, m.Log); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	migration := new(migrationDTO)
-	err := m.db.Table(m.TableName).Take(migration, "name = ?", name).Error
-	if !errors.Is(err, gorm.ErrRecordNotFound) && err != nil {
-		return err
-	}
-
-	if migration.Id == 0 {
-		migration.Name = name
-		if err := m.db.Table(m.TableName).Create(migration).Error; err != nil {
+	defer func() {
+		if err != nil {
 			tx.Rollback()
-			return err
+		} else {
+			tx.Commit()
 		}
+	}()
+
+	if err = tx.Table(m.TableName).Create(&migrationDTO{Name: name}).Error; err != nil {
+		return err
 	}
-	tx.Commit()
+
+	if err = migration.Up(tx, m.Log); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (m *migrater) DownConcreteMigration(name string) error {
-	mig, ok := pool.migrations[name]
+	migration, ok := pool.migrations[name]
 	if !ok {
 		return errors.New("Does not exist migration with name: " + name)
 	}
 
+	var err error
 	tx := m.db.Begin()
-	if err := mig.Down(tx, m.Log); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	migration := new(migrationDTO)
-	err := m.db.Table(m.TableName).Take(migration, "name = ?", name).Error
-	if !errors.Is(err, gorm.ErrRecordNotFound) && err != nil {
-		return err
-	}
-
-	if migration.Id != 0 {
-		if err := m.db.Table(m.TableName).Delete(migration).Error; err != nil {
+	defer func() {
+		if err != nil {
 			tx.Rollback()
-			return err
+		} else {
+			tx.Commit()
 		}
+	}()
+
+	if err = tx.Table(m.TableName).Delete(&migrationDTO{}, "name = ?", name).Error; err != nil {
+		return err
 	}
-	tx.Commit()
+
+	if err = migration.Down(tx, m.Log); err != nil {
+		return err
+	}
 
 	return nil
 }
