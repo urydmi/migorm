@@ -4,22 +4,25 @@ MIGORM is a helper tool for [gorm](https://github.com/jinzhu/gorm) framework all
 
 ## Quick start:
 Install package
+
 ```bash
 go get github.com/urydmi/migorm
 ```
+
 Then you must create a file for running migration commands (e.g. migrate.go)
+
 ```go
 package main
 
 import (
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/jinzhu/gorm"
 	"fmt"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/urydmi/migorm"
 )
 
 func main() {
-
 	db_user := ""
 	db_pass := ""
 	db_host := ""
@@ -55,9 +58,9 @@ After that, a package with default name **migrations**  will be created in the s
 ...
 ```
 
-**! You must import new created package** with migrations in you migration run file (migrate.go)
-```go
+**You must import new created package** with migrations in you migration run file (migrate.go)
 
+```go
 import (
 	"github.com/jinzhu/gorm"
     _ "github.com/jinzhu/gorm/dialects/mysql"
@@ -74,6 +77,7 @@ Run migrations for execution.
 ```bash
 go run migrate.go
 ```
+
 Successful migrations are inserted into the table by default: **migrations**. And in the future ones will be skipped.
 
 ## Available commands:
@@ -84,11 +88,10 @@ go run migrate.go up 1542223496_first_example    # Up specific migration
 go run migrate.go down 1542223496_first_example  # Down specific migration
 ```
 
-
 ## Configuration
 You can configure some parameters before performing migrations.
-```go
 
+```go
 migrater := migorm.NewMigrater(db)
 
 // don't forget import new package after create
@@ -101,15 +104,9 @@ migrater.Conf().TableName = "my_migrations"
 migrater.Conf().Log = migorm.NewLogger() // or your implementation
 
 migorm.Run(migrater)
-
 ```
 
-
-## Recomendations
-// TODO
-
 ## Authors
-
 + [pzavyalov](https://github.com/pzavyalov)
 
 ## License
