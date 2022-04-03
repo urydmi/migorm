@@ -187,7 +187,7 @@ func (m *migrater) MakeFileMigration(name string) error {
 }
 
 // Finds not yet completed migration files
-func (m *migrater) getNewMigrations() []migrationModel {
+func (m *migrater) getNewMigrations() []migrationDTO {
 	var names []string
 	for k := range pool.migrations {
 		names = append(names, k)
@@ -196,7 +196,7 @@ func (m *migrater) getNewMigrations() []migrationModel {
 	sort.Strings(names)
 
 	step := 20 // limit
-	result := make([]migrationModel, 0)
+	result := make([]migrationDTO, 0)
 	existMigrations := make(map[string]bool)
 	for i := 0; i < len(names); {
 
@@ -233,8 +233,8 @@ func (m *migrater) getNewMigrations() []migrationModel {
 }
 
 //
-func (m *migrater) newMigrationModel() migrationModel {
-	return migrationModel{tableName: m.Configurator.TableName}
+func (m *migrater) newMigrationModel() migrationDTO {
+	return migrationDTO{tableName: m.Configurator.TableName}
 }
 
 // ***  helpers ***
