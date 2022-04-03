@@ -1,9 +1,10 @@
 package {{.package}}
 
 import (
-	"github.com/jinzhu/gorm"
-	"github.com/carprice-tech/migorm"
 	"errors"
+	
+	"github.com/jinzhu/gorm"
+	"github.com/urydmi/migorm"
 )
 
 func init(){

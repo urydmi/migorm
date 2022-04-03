@@ -5,7 +5,7 @@ MIGORM is a helper tool for [gorm](https://github.com/jinzhu/gorm) framework all
 ## Quick start:
 Install package
 ```bash
-glide get github.com/carprice-tech/migorm
+go get github.com/urydmi/migorm
 ```
 Then you must create a file for running migration commands (e.g. migrate.go)
 ```go
@@ -15,7 +15,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jinzhu/gorm"
 	"fmt"
-	"github.com/carprice-tech/migorm"
+	"github.com/urydmi/migorm"
 )
 
 func main() {
@@ -59,9 +59,9 @@ After that, a package with default name **migrations**  will be created in the s
 ```go
 
 import (
+	"github.com/jinzhu/gorm"
     _ "github.com/jinzhu/gorm/dialects/mysql"
-    "github.com/jinzhu/gorm"
-    "github.com/carprice-tech/migorm"
+    "github.com/urydmi/migorm"
     _ "your/project/path/migrations"
 )
 ```

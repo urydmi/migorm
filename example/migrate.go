@@ -1,12 +1,13 @@
 package main
 
 import (
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/jinzhu/gorm"
-		"github.com/carprice-tech/migorm"
-	_ "github.com/carprice-tech/migorm/example/migrations"
 	"path"
 	"runtime"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/urydmi/migorm"
+	_ "github.com/urydmi/migorm/example/migrations"
 )
 
 //
@@ -31,7 +32,7 @@ func main() {
 
 	migrater := migorm.NewMigrater(dbConn)
 
-	_, file, _, _  := runtime.Caller(0)
+	_, file, _, _ := runtime.Caller(0)
 	curDir := path.Dir(file)
 	migrater.Conf().MigrationsDir = curDir + "/../migrations"
 

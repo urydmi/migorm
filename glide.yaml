@@ -1,6 +1,0 @@
-package: github.com/carprice-tech/migorm
-import:
-- package: github.com/jinzhu/gorm
-  version: ^1.9.1
-  subpackages:
-  - dialects/mysql

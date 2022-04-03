@@ -1,11 +1,12 @@
 package migorm
 
 import (
-	"github.com/jinzhu/gorm"
+	"path/filepath"
 	"runtime"
 	"strings"
-	"path/filepath"
 	"sync"
+
+	"github.com/jinzhu/gorm"
 )
 
 var pool migrationsPool
@@ -37,7 +38,7 @@ func RegisterMigration(migration Migration) {
 	pool.Lock()
 	defer pool.Unlock()
 	_, ok = pool.migrations[migrationName]
-	if (ok) {
+	if ok {
 		panic("Migration with name : " + migrationName + " already exist")
 	}
 	pool.migrations[migrationName] = migration
