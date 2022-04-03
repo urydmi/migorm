@@ -48,32 +48,21 @@ func (m *migrater) UpMigrations() error {
 
 	m.checkMigrationTable()
 
-	newMigrations := m.getNewMigrations()
-
-	successCnt := 0
-	for _, migration := range newMigrations {
-		if migration.Id == 0 {
-			tx := m.db.Begin()
-			if err := pool.migrations[migration.Name].Up(tx, m.Log); err != nil {
-				tx.Rollback()
-				return fmt.Errorf("up migration: %+v, err: %+v", migration.Name, err)
-			}
-			if err := m.db.Create(&migration).Error; err != nil {
-				tx.Rollback()
-				return fmt.Errorf("save migration: %v, err: %+v", migration.Name, err)
-			}
-			tx.Commit()
-			m.Log.Infof("success: %+v", migration.Name)
-			successCnt++
-		}
-	}
-
-	if successCnt > 0 {
-		m.Log.Infof("All migrations are done success!")
-	} else {
+	newMigrationNames := m.getNewMigrationNames()
+	if len(newMigrationNames) == 0 {
 		m.Log.Infof("Nothing to migrate.")
+		return nil
 	}
 
+	for _, name := range newMigrationNames {
+		if err := m.UpConcreteMigration(name); err != nil {
+			m.Log.Errorf("%s migration failed", name)
+			return err
+		}
+		m.Log.Infof("%s migration success", name)
+	}
+
+	m.Log.Infof("All migrations are done success!")
 	return nil
 }
 
@@ -181,7 +170,7 @@ func (m *migrater) MakeFileMigration(name string) error {
 }
 
 // Finds not yet completed migration files
-func (m *migrater) getNewMigrations() []migrationDTO {
+func (m *migrater) getNewMigrationNames() []string {
 	var names []string
 	for k := range pool.migrations {
 		names = append(names, k)
@@ -189,37 +178,31 @@ func (m *migrater) getNewMigrations() []migrationDTO {
 
 	sort.Strings(names)
 
-	step := 20 // limit
-	result := make([]migrationDTO, 0)
-	existMigrations := make(map[string]bool)
-	for i := 0; i < len(names); {
-
-		i += step
+	existMigrations := make(map[string]interface{})
+	size := 20 // limit
+	for i := size; i <= len(names)+size; i += size {
 		var chunkNames []string
 		if i <= len(names) {
-			chunkNames = names[i-step : i]
+			chunkNames = names[i-size : i]
 		} else {
-			chunkNames = names[i-step:]
+			chunkNames = names[i-size:]
 		}
 
 		rows := make([]struct{ Name string }, 0)
-		if err := m.db.Table(m.TableName).
-			Where("name IN (?)", chunkNames).
-			Scan(&rows).Error; err != nil {
-
+		err := m.db.Table(m.TableName).Where("name IN (?)", chunkNames).Scan(&rows).Error
+		if err != nil {
 			panic(err)
 		}
 
 		for _, row := range rows {
-			existMigrations[row.Name] = true
+			existMigrations[row.Name] = nil
 		}
 	}
 
+	result := make([]string, 0)
 	for _, name := range names {
 		if _, ok := existMigrations[name]; !ok {
-			result = append(result, migrationDTO{
-				Name: name,
-			})
+			result = append(result, name)
 		}
 	}
 
