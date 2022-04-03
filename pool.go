@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 var pool migrationsPool

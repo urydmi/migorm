@@ -12,7 +12,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func NewMigrater(db *gorm.DB) Migrater {
@@ -91,7 +91,7 @@ func (m *migrater) UpConcreteMigration(name string) error {
 
 	migrationModel := m.newMigrationModel()
 	err := m.db.Where("name = ?", name).First(&migrationModel).Error
-	if !gorm.IsRecordNotFoundError(err) && err != nil {
+	if !errors.Is(err, gorm.ErrRecordNotFound) && err != nil {
 		return err
 	}
 
@@ -122,7 +122,7 @@ func (m *migrater) DownConcreteMigration(name string) error {
 
 	migrationModel := m.newMigrationModel()
 	err := m.db.Where("name = ?", name).First(&migrationModel).Error
-	if !gorm.IsRecordNotFoundError(err) && err != nil {
+	if !errors.Is(err, gorm.ErrRecordNotFound) && err != nil {
 		return err
 	}
 
@@ -243,9 +243,9 @@ func (m *migrater) newMigrationModel() migrationModel {
 func (m *migrater) checkMigrationTable() {
 	model := m.newMigrationModel()
 
-	if !m.db.HasTable(&model) {
+	if !m.db.Migrator().HasTable(&model) {
 		m.Log.Infof("Init table: %v", model.TableName())
-		if err := m.db.AutoMigrate(&model).Error; err != nil {
+		if err := m.db.Migrator().AutoMigrate(&model).Error; err != nil {
 			panic(err)
 		}
 	}

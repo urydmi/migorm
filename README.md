@@ -1,6 +1,6 @@
 # MIGORM
 
-MIGORM is a helper tool for [gorm](https://github.com/jinzhu/gorm) framework allowing you to make changes in your database by creating migration files.
+MIGORM is a helper tool for [gorm](gorm.io/gorm) framework allowing you to make changes in your database by creating migration files.
 
 ## Quick start:
 Install package
@@ -17,8 +17,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"gorm.io/gorm"
+	_ "gorm.io/driver/mysql"
 	"github.com/urydmi/migorm"
 )
 
@@ -62,8 +62,8 @@ After that, a package with default name **migrations**  will be created in the s
 
 ```go
 import (
-	"github.com/jinzhu/gorm"
-    _ "github.com/jinzhu/gorm/dialects/mysql"
+	"gorm.io/gorm"
+    _ "gorm.io/driver/mysql"
     "github.com/urydmi/migorm"
     _ "your/project/path/migrations"
 )

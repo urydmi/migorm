@@ -4,10 +4,10 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/urydmi/migorm"
 	_ "github.com/urydmi/migorm/example/migrations"
+	_ "gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 //

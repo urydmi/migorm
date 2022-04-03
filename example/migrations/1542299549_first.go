@@ -3,8 +3,8 @@ package migrations
 import (
 	"errors"
 
-	"github.com/jinzhu/gorm"
 	"github.com/urydmi/migorm"
+	"gorm.io/gorm"
 )
 
 func init() {
