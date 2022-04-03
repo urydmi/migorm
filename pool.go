@@ -27,11 +27,9 @@ type Migration interface {
 
 // Each migration file call this method in its init method
 func RegisterMigration(migration Migration) {
-
 	_, file, _, ok := runtime.Caller(1)
 	if !ok {
 		panic("Fail invoke caller")
-		return
 	}
 	migrationName := strings.Replace(filepath.Base(file), ".go", "", -1)
 

@@ -1,17 +1,18 @@
 package migorm
 
 import (
-	"github.com/jinzhu/gorm"
-	"sort"
 	"errors"
-	"time"
-	"strings"
+	"fmt"
 	"io/ioutil"
 	"os"
-	"fmt"
-	"text/template"
-	"runtime"
 	"path"
+	"runtime"
+	"sort"
+	"strings"
+	"text/template"
+	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
 func NewMigrater(db *gorm.DB) Migrater {
@@ -43,7 +44,6 @@ func (m *migrater) Conf() *Configurator {
 }
 
 func (m *migrater) UpMigrations() error {
-
 	m.Log.Infof("Start migrations")
 
 	m.checkMigrationTable()
@@ -138,7 +138,6 @@ func (m *migrater) DownConcreteMigration(name string) error {
 }
 
 func (m *migrater) MakeFileMigration(name string) error {
-
 	migrationsPath := m.Configurator.MigrationsDir
 
 	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
@@ -189,9 +188,8 @@ func (m *migrater) MakeFileMigration(name string) error {
 
 // Finds not yet completed migration files
 func (m *migrater) getNewMigrations() []migrationModel {
-
 	var names []string
-	for k, _ := range pool.migrations {
+	for k := range pool.migrations {
 		names = append(names, k)
 	}
 
@@ -217,7 +215,7 @@ func (m *migrater) getNewMigrations() []migrationModel {
 
 			panic(err)
 		}
-		
+
 		for _, row := range rows {
 			existMigrations[row.Name] = true
 		}
@@ -235,7 +233,7 @@ func (m *migrater) getNewMigrations() []migrationModel {
 }
 
 //
-func (m *migrater) newMigrationModel() migrationModel{
+func (m *migrater) newMigrationModel() migrationModel {
 	return migrationModel{tableName: m.Configurator.TableName}
 }
 
@@ -243,7 +241,6 @@ func (m *migrater) newMigrationModel() migrationModel{
 
 // check or create table to register successful migrations
 func (m *migrater) checkMigrationTable() {
-
 	model := m.newMigrationModel()
 
 	if !m.db.HasTable(&model) {
@@ -265,7 +262,7 @@ func checkFileExists(dir string, name string) error {
 		split := strings.Split(f.Name(), "_")
 
 		if name == strings.Join(split[1:], "_") {
-			return fmt.Errorf("File %v already exists in dir: %v", name, dir)
+			return fmt.Errorf("file %v already exists in dir: %v", name, dir)
 		}
 	}
 
@@ -274,10 +271,9 @@ func checkFileExists(dir string, name string) error {
 
 //
 func getTemplate() (*template.Template, error) {
-
 	_, filename, _, ok := runtime.Caller(1)
 	if !ok {
-		return nil, fmt.Errorf("Template caller")
+		return nil, fmt.Errorf("template caller")
 	}
 
 	tmpl, err := template.ParseFiles(path.Dir(filename) + "/" + "template")
