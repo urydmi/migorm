@@ -89,15 +89,15 @@ func (m *migrater) UpConcreteMigration(name string) error {
 		return err
 	}
 
-	migrationModel := m.newMigrationModel()
-	err := m.db.Where("name = ?", name).First(&migrationModel).Error
+	migration := new(migrationDTO)
+	err := m.db.Table(m.TableName).Take(migration, "name = ?", name).Error
 	if !errors.Is(err, gorm.ErrRecordNotFound) && err != nil {
 		return err
 	}
 
-	if migrationModel.Id == 0 {
-		migrationModel.Name = name
-		if err := m.db.Create(&migrationModel).Error; err != nil {
+	if migration.Id == 0 {
+		migration.Name = name
+		if err := m.db.Table(m.TableName).Create(migration).Error; err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -108,7 +108,6 @@ func (m *migrater) UpConcreteMigration(name string) error {
 }
 
 func (m *migrater) DownConcreteMigration(name string) error {
-
 	mig, ok := pool.migrations[name]
 	if !ok {
 		return errors.New("Does not exist migration with name: " + name)
@@ -120,14 +119,14 @@ func (m *migrater) DownConcreteMigration(name string) error {
 		return err
 	}
 
-	migrationModel := m.newMigrationModel()
-	err := m.db.Where("name = ?", name).First(&migrationModel).Error
+	migration := new(migrationDTO)
+	err := m.db.Table(m.TableName).Take(migration, "name = ?", name).Error
 	if !errors.Is(err, gorm.ErrRecordNotFound) && err != nil {
 		return err
 	}
 
-	if migrationModel.Id != 0 {
-		if err := m.db.Delete(&migrationModel, "name = ?", name).Error; err != nil {
+	if migration.Id != 0 {
+		if err := m.db.Table(m.TableName).Delete(migration).Error; err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -209,7 +208,7 @@ func (m *migrater) getNewMigrations() []migrationDTO {
 		}
 
 		rows := make([]struct{ Name string }, 0)
-		if err := m.db.Model(m.newMigrationModel()).
+		if err := m.db.Table(m.TableName).
 			Where("name IN (?)", chunkNames).
 			Scan(&rows).Error; err != nil {
 
@@ -223,29 +222,24 @@ func (m *migrater) getNewMigrations() []migrationDTO {
 
 	for _, name := range names {
 		if _, ok := existMigrations[name]; !ok {
-			model := m.newMigrationModel()
-			model.Name = name
-			result = append(result, model)
+			result = append(result, migrationDTO{
+				Name: name,
+			})
 		}
 	}
 
 	return result
 }
 
-//
-func (m *migrater) newMigrationModel() migrationDTO {
-	return migrationDTO{tableName: m.Configurator.TableName}
-}
-
 // ***  helpers ***
 
 // check or create table to register successful migrations
 func (m *migrater) checkMigrationTable() {
-	model := m.newMigrationModel()
+	migration := new(migrationDTO)
 
-	if !m.db.Migrator().HasTable(&model) {
-		m.Log.Infof("Init table: %v", model.TableName())
-		if err := m.db.Migrator().AutoMigrate(&model).Error; err != nil {
+	if !m.db.Migrator().HasTable(&migration) {
+		m.Log.Infof("Init table: %v", m.TableName)
+		if err := m.db.Table(m.TableName).AutoMigrate(migration).Error; err != nil {
 			panic(err)
 		}
 	}
