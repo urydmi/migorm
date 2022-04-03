@@ -1,7 +1,6 @@
 package migorm
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -46,9 +45,18 @@ func (m *migrater) Conf() *Configurator {
 func (m *migrater) UpMigrations() error {
 	m.Log.Infof("Start migrations")
 
-	m.checkMigrationTable()
+	created, err := m.createMigrationsTable()
+	if err != nil {
+		return err
+	}
 
-	newMigrationNames := m.getNewMigrationNames()
+	var newMigrationNames []string
+	if created {
+		newMigrationNames = getMigrationNames()
+	} else {
+		newMigrationNames = m.getNewMigrationNames()
+	}
+
 	if len(newMigrationNames) == 0 {
 		m.Log.Infof("Nothing to migrate.")
 		return nil
@@ -69,7 +77,7 @@ func (m *migrater) UpMigrations() error {
 func (m *migrater) UpConcreteMigration(name string) error {
 	migration, ok := pool.migrations[name]
 	if !ok {
-		return errors.New("Does not exist migration with name: " + name)
+		return fmt.Errorf("migration %s does not exist", name)
 	}
 
 	var err error
@@ -96,7 +104,7 @@ func (m *migrater) UpConcreteMigration(name string) error {
 func (m *migrater) DownConcreteMigration(name string) error {
 	migration, ok := pool.migrations[name]
 	if !ok {
-		return errors.New("Does not exist migration with name: " + name)
+		return fmt.Errorf("migration %s does not exist", name)
 	}
 
 	var err error
@@ -169,16 +177,11 @@ func (m *migrater) MakeFileMigration(name string) error {
 	return nil
 }
 
-// Finds not yet completed migration files
+// Finds not completed migration names
 func (m *migrater) getNewMigrationNames() []string {
-	var names []string
-	for k := range pool.migrations {
-		names = append(names, k)
-	}
+	names := getMigrationNames()
 
-	sort.Strings(names)
-
-	existMigrations := make(map[string]interface{})
+	result := make([]string, 0)
 	size := 20 // limit
 	for i := size; i <= len(names)+size; i += size {
 		var chunkNames []string
@@ -188,8 +191,10 @@ func (m *migrater) getNewMigrationNames() []string {
 			chunkNames = names[i-size:]
 		}
 
+		existMigrations := make(map[string]interface{}, len(chunkNames))
+
 		rows := make([]struct{ Name string }, 0)
-		err := m.db.Table(m.TableName).Where("name IN (?)", chunkNames).Scan(&rows).Error
+		err := m.db.Table(m.TableName).Where("name IN ?", chunkNames).Scan(&rows).Error
 		if err != nil {
 			panic(err)
 		}
@@ -197,30 +202,40 @@ func (m *migrater) getNewMigrationNames() []string {
 		for _, row := range rows {
 			existMigrations[row.Name] = nil
 		}
-	}
 
-	result := make([]string, 0)
-	for _, name := range names {
-		if _, ok := existMigrations[name]; !ok {
-			result = append(result, name)
+		for _, name := range chunkNames {
+			if _, ok := existMigrations[name]; !ok {
+				result = append(result, name)
+			}
 		}
 	}
 
 	return result
 }
 
-// ***  helpers ***
-
-// check or create table to register successful migrations
-func (m *migrater) checkMigrationTable() {
-	migration := new(migrationDTO)
-
-	if !m.db.Migrator().HasTable(&migration) {
-		m.Log.Infof("Init table: %v", m.TableName)
-		if err := m.db.Table(m.TableName).AutoMigrate(migration).Error; err != nil {
-			panic(err)
-		}
+// create table to register successful migrations
+func (m *migrater) createMigrationsTable() (bool, error) {
+	if m.db.Migrator().HasTable(m.TableName) {
+		return false, nil
 	}
+
+	if err := m.db.Table(m.TableName).AutoMigrate(&migrationDTO{}); err != nil {
+		return false, err
+	}
+
+	m.Log.Infof("Init table: %v", m.TableName)
+	return true, nil
+}
+
+func getMigrationNames() []string {
+	names := make([]string, 0, len(pool.migrations))
+	for k := range pool.migrations {
+		names = append(names, k)
+	}
+
+	sort.Strings(names)
+
+	return names
 }
 
 // сheck the existence of a file in the directory with migrations

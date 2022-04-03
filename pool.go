@@ -16,13 +16,13 @@ type migrationsPool struct {
 	sync.Mutex
 }
 
-func init() {
-	pool = migrationsPool{migrations: make(map[string]Migration)}
-}
-
 type Migration interface {
 	Up(db *gorm.DB, log Logger) error
 	Down(db *gorm.DB, log Logger) error
+}
+
+func init() {
+	pool = migrationsPool{migrations: make(map[string]Migration)}
 }
 
 // Each migration file call this method in its init method
